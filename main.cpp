@@ -34,8 +34,9 @@ void delay_us(int us) {
 int main() {
   SET_FREEZE_REG = (1 << 3); // FRZ_WDOG
 
-  PMU_CTRL_REG = 1 << 2;     // RADIO_SLEEP
-  SYS_CTRL_REG = 0b101 << 5; // DEBUGGER_ENABLE, PAD_LATCH_EN
+  PMU_CTRL_REG = 1 << 2; // RADIO_SLEEP
+  SYS_CTRL_REG =
+      0b101 << 5 | 0x2; // DEBUGGER_ENABLE, PAD_LATCH_EN, REMAP_ADR0=SysRAM1
 
   // Using pin GPIO0.4 as output
   P04_MODE_REG = 0b11 << 8; // Set P0.4 as output
@@ -51,8 +52,8 @@ int main() {
   // Enter deep sleep mode
   delay_us(1000000); // 1 second delay
 
-  PMU_CTRL_REG = 0b11 << 1; // RADIO_SLEEP, PERIPH_SLEEP
-  SYS_CTRL_REG = 1 << 7;    // DEBUGGER_ENABLE
+  PMU_CTRL_REG = 0b11 << 1;    // RADIO_SLEEP, PERIPH_SLEEP
+  SYS_CTRL_REG = 1 << 7 | 0x2; // DEBUGGER_ENABLE, REMAP_ADR0=SysRAM1
 
   // SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk);
   *((volatile unsigned int *)(0xE000ED10)) |= (1UL << 2);
