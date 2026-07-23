@@ -26,6 +26,6 @@ clean:
 
 run: baremetal.hex
 	openocd -f interface/cmsis-dap.cfg -f da14585.cfg \
-	  -c "init; reset halt; load_image baremetal.hex; reset; exit"
+	  -c "init; halt; load_image baremetal.hex; reset; resume; exit"
 
 .PHONY: all clean run
