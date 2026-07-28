@@ -1,4 +1,4 @@
-CFLAGS=-mthumb -mcpu=cortex-m0 -nostdlib -nostartfiles -Os
+CFLAGS=-mthumb -mcpu=cortex-m0 -nostdlib -nostartfiles -Os -D__STARTUP_CLEAR_BSS
 LDFLAGS=-T da14585.ld -nostdlib -Wl,--gc-sections -Wl,-Map,baremetal.map
 
 all: baremetal.elf baremetal.bin baremetal.hex

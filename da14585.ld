@@ -1,6 +1,12 @@
 /* Link map for a DA14585 image (0x07FC0000, 96 KB).
- *   0x07FC0000  .isr_vector + code + rodata   (this image, a few hundred bytes)
+ *   0x07FC0000  .isr_vector + code + rodata + .init_array + .data
+ *               .bss  (NOLOAD -- no image bytes, zeroed by startup.s)
  *   ..0x07FD8000  stack, growing down from the top of RAM
+ *
+ * RAM-only image: .data's load address == its run address.
+ * .bss clearing needs -D__STARTUP_CLEAR_BSS (see Makefile).
+ * startup.s copies and zeroes 32-bit words, so .data and .bss are word aligned
+ * and word sized.
  */
 MEMORY
 {
@@ -18,18 +24,41 @@ SECTIONS
         KEEP(*(.isr_vector))
         *(.text*)
         *(.rodata .rodata.*)
+        . = ALIGN(4);
     } > RAM
 
-    /* startup.s always runs its single-section .data copy loop, so it needs
-     * these three symbols even though .data is empty (it copies 0 bytes). */
-    __etext = ALIGN(4);
-    .data : { __data_start__ = .; *(.data*); __data_end__ = .; } > RAM
-    ASSERT(SIZEOF(.data) == 0, "blinky must have no initialised .data")
+    /* C++ global constructors, collected so they aren't an orphan section.
+     * NOTHING RUNS THEM (stock startup.s, no C library _start), so a global
+     * object with a constructor stays unconstructed -- plain globals are fine.
+     * To support them, walk this table in _start() before main(). */
+    .init_array :
+    {
+        . = ALIGN(4);
+        __init_array_start = .;
+        KEEP(*(SORT(.init_array.*)))
+        KEEP(*(.init_array))
+        __init_array_end = .;
+    } > RAM
+
+    .data :
+    {
+        . = ALIGN(4);
+        __data_start__ = .;
+        *(.data*)
+        . = ALIGN(4);
+        __data_end__ = .;
+    } > RAM
+
+    __etext = __data_start__;   /* startup.s copy source == destination */
 
     .bss (NOLOAD) :
     {
+        . = ALIGN(4);
+        __bss_start__ = .;
         *(.bss*)
         *(COMMON)
+        . = ALIGN(4);
+        __bss_end__ = .;
     } > RAM
 
     /* No exception unwinder in this -nostdlib C++ build. */
